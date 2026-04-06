@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { TableNode, TableItemRow, TableGroupHeader, generateInitialData } from '@/domain/models/TableRow';
-import type { DragEndEvent } from '@/presentation/components/DraggableTable';
+import type { DragStartEvent, DragOverEvent, DragEndEvent } from '@/presentation/components/DraggableTable';
 
 export function arrayMove<T>(array: T[], from: number, to: number): T[] {
   const newArray = array.slice();
@@ -12,6 +12,9 @@ export const useTableForm = () => {
   const [rows, setRows] = useState<TableNode[]>(generateInitialData());
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10); 
+  
+  // キャンセル時の復元用にスナップショットを保持
+  const snapshotRef = useRef<TableNode[]>([]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -36,8 +39,49 @@ export const useTableForm = () => {
     return slice;
   }, [rows, page, rowsPerPage]);
 
+  const handleDragStart = useCallback((_event: DragStartEvent) => {
+    // ドラッグ開始時の状態をスナップショットとして保存
+    snapshotRef.current = [...rows];
+  }, [rows]);
+
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    if (!event.operation) return;
+    const {source, target} = event.operation;
+    if (!source || !target) return;
+    if (source.id === target.id) return;
+
+    setRows((items) => {
+      const activeNode = items.find(item => item.id === source.id);
+      if (!activeNode || activeNode.isHeader) return items;
+
+      const oldIndex = items.findIndex((item) => item.id === source.id);
+      const newIndex = items.findIndex((item) => item.id === target.id);
+
+      if (oldIndex === -1 || newIndex === -1) return items;
+
+      const overNode = items[newIndex];
+      const targetGroupId = overNode.isHeader ? overNode.id : (overNode as TableItemRow).groupId;
+
+      // 「同じグループ内でのみ順序入れ替え可能」の制約
+      if (activeNode.groupId !== targetGroupId) {
+        return items;
+      }
+
+      // 順序が変わった場合のみステートを更新（リアルタイムに入れ替え）
+      if (oldIndex !== newIndex) {
+        return arrayMove(items, oldIndex, newIndex);
+      }
+      
+      return items;
+    });
+  }, []);
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    if (event.canceled) return;
+    if (event.canceled) {
+      // キャンセル時はスナップショットから復元
+      setRows(snapshotRef.current);
+      return;
+    }
     
     if (!event.operation) return;
     const {source, target} = event.operation;
@@ -56,9 +100,9 @@ export const useTableForm = () => {
       const overNode = items[newIndex];
       const targetGroupId = overNode.isHeader ? overNode.id : (overNode as TableItemRow).groupId;
 
-      // 「同じグループ内でのみ順序入れ替え可能」の制約 (A案)
+      // 「同じグループ内でのみ順序入れ替え可能」の制約
       if (activeNode.groupId !== targetGroupId) {
-        return [...items]; // グループが異なる場合は元に戻すため新しい配列を返す
+        return [...items]; // 強制再描画
       }
 
       return arrayMove(items, oldIndex, newIndex);
@@ -85,6 +129,8 @@ export const useTableForm = () => {
     paginatedRows,
     page,
     rowsPerPage,
+    handleDragStart,
+    handleDragOver,
     handleDragEnd,
     handleChangeValue,
     handleChangePage,

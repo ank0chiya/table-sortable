@@ -26,6 +26,8 @@ export default function Home() {
     paginatedRows, 
     page, 
     rowsPerPage, 
+    handleDragStart,
+    handleDragOver,
     handleDragEnd, 
     handleChangeValue,
     handleChangePage,
@@ -41,7 +43,7 @@ export default function Home() {
             ドラッグ＆ドロップ対応 テーブルフォーム
           </Typography>
           <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 4 }}>
-            行の左端にあるアイコンをドラッグすることで、レコードの順序を入れ替えることができます。
+            行の左端にあるハンドルを掴むことで、レコードの順序を入れ替えることができます。
             また、名前やコード名などの各種値コンポーネントの値も連動して保存されます。
           </Typography>
           <DraggableTable 
@@ -51,6 +53,8 @@ export default function Home() {
             rowsPerPage={rowsPerPage}
             onChangePage={handleChangePage}
             onChangeRowsPerPage={handleChangeRowsPerPage}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd} 
             onChangeValue={handleChangeValue} 
           />

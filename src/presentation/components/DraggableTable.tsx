@@ -8,6 +8,8 @@ import { TableNode, TableItemRow } from '@/domain/models/TableRow';
 import { DraggableTableRow } from './DraggableTableRow';
 import { TableGroupHeaderRow } from './TableGroupHeaderRow';
 
+export type DragStartEvent = Parameters<NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragStart']>>[0];
+export type DragOverEvent = Parameters<NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragOver']>>[0];
 export type DragEndEvent = Parameters<NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragEnd']>>[0];
 
 type Props = {
@@ -17,6 +19,8 @@ type Props = {
   rowsPerPage: number;
   onChangePage: (event: unknown, newPage: number) => void;
   onChangeRowsPerPage: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onDragStart: (event: DragStartEvent) => void;
+  onDragOver: (event: DragOverEvent) => void;
   onDragEnd: (event: DragEndEvent) => void;
   onChangeValue: <K extends keyof TableItemRow>(id: string, field: K, value: TableItemRow[K]) => void;
 };
@@ -24,12 +28,16 @@ type Props = {
 export const DraggableTable: React.FC<Props> = ({ 
   rows, totalCount, page, rowsPerPage, 
   onChangePage, onChangeRowsPerPage, 
-  onDragEnd, onChangeValue 
+  onDragStart, onDragOver, onDragEnd, onChangeValue 
 }) => {
   let sortableIndex = 0;
 
   return (
-    <DragDropProvider onDragEnd={onDragEnd}>
+    <DragDropProvider 
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
+    >
       <TableContainer component={Paper} elevation={3} sx={{ borderRadius: 2 }}>
         <Table sx={{ minWidth: 650, tableLayout: 'fixed' }} aria-label="draggable form table">
           <TableHead sx={{ backgroundColor: 'action.hover' }}>
