@@ -30,10 +30,23 @@ export const DraggableTableRow: React.FC<Props> = ({ row, index, onChangeValue }
       ref={ref as any} 
       className={isDragging ? 'dragging-row' : ''}
       sx={{ 
-        backgroundColor: isDragging ? '#e3f2fd' : 'inherit',
-        opacity: isDragging ? 0.8 : 1,
-        boxShadow: isDragging ? '0px 5px 15px rgba(0,0,0,0.1)' : 'none',
-        zIndex: isDragging ? 999 : 'auto',
+        backgroundColor: isDragging ? '#ffffff' : 'inherit',
+        opacity: isDragging ? 0.9 : 1,
+        position: 'relative',
+        zIndex: isDragging ? 9999 : 'auto',
+        boxShadow: isDragging 
+          ? '0px 10px 40px rgba(0, 0, 0, 0.2), 0px 4px 12px rgba(0, 0, 0, 0.1)' 
+          : 'none',
+        transform: isDragging ? 'scale(1.03)' : 'scale(1)',
+        // ドラッグ中以外の行も位置が変わる際に滑らかに動くようにする
+        transition: isDragging 
+          ? 'none' 
+          : 'transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, background-color 0.2s ease',
+        // <tr> に boxShadow を効かせるための設定
+        '& > td': { 
+          borderBottom: isDragging ? 'none' : '1px solid rgba(224, 224, 224, 1)',
+          backgroundColor: isDragging ? '#ffffff' : 'inherit',
+        },
       }}
     >
       <TableCell padding="checkbox">
@@ -44,9 +57,19 @@ export const DraggableTableRow: React.FC<Props> = ({ row, index, onChangeValue }
             display: 'inline-flex',
             padding: '8px',
             touchAction: 'none',
+            borderRadius: '50%',
+            backgroundColor: isDragging ? '#e3f2fd' : 'transparent',
+            transition: 'background-color 0.2s, transform 0.2s',
+            transform: isDragging ? 'scale(1.1)' : 'scale(1)',
+          }}
+          onMouseEnter={(e) => {
+            if (!isDragging) e.currentTarget.style.backgroundColor = '#f5f5f5';
+          }}
+          onMouseLeave={(e) => {
+            if (!isDragging) e.currentTarget.style.backgroundColor = 'transparent';
           }}
         >
-          <DragIndicatorIcon color="action" />
+          <DragIndicatorIcon color={isDragging ? 'primary' : 'action'} />
         </div>
       </TableCell>
       <TableCell>
